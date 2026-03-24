@@ -435,7 +435,33 @@
     /* ─── Footer ──────────────────────────────────── */
     footer {
       border-top: 1px solid rgba(201,169,110,.1);
-      text-align: center; padding: 34px 24px;
+      text-align: center; padding: 40px 24px 36px;
+      display: flex; flex-direction: column; align-items: center; gap: 22px;
+    }
+
+    .home-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 13px 28px;
+      font-size: 9px; letter-spacing: 3.5px; text-transform: uppercase;
+      font-family: 'Montserrat', system-ui, sans-serif; font-weight: 400;
+      color: var(--gold);
+      border: 1px solid var(--gold-border);
+      border-radius: 2px;
+      background: var(--gold-dim);
+      text-decoration: none;
+      transition: background .3s, border-color .3s, color .3s, box-shadow .3s, transform .3s;
+    }
+
+    .home-btn:hover {
+      background: rgba(201,169,110,.24);
+      border-color: rgba(201,169,110,.7);
+      box-shadow: 0 0 28px rgba(201,169,110,.18);
+      transform: translateY(-2px);
+    }
+
+    .home-btn svg { flex-shrink: 0; }
+
+    .footer-copy {
       color: var(--text-dim); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
     }
   </style>
@@ -490,7 +516,13 @@
   </div>
 
   <footer>
-    <p>Rendering Portfolio &nbsp;·&nbsp; &copy; 2026 All rights reserved</p>
+    <a class="home-btn" href="https://tsdesignstudios.com/">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1 7L7 1L13 7V13H9.5V9.5H4.5V13H1V7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" fill="none"/>
+      </svg>
+      Back to TS Design Studios
+    </a>
+    <p class="footer-copy">Rendering Portfolio &nbsp;·&nbsp; &copy; 2026 All rights reserved</p>
   </footer>
 
   <script>
