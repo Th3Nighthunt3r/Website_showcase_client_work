@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rendering Showcase — Before &amp; After</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #080808;
+      --surface:     #111111;
+      --surface-2:   #1c1c1c;
+      --gold:        #c9a96e;
+      --gold-dim:    rgba(201,169,110,0.15);
+      --gold-border: rgba(201,169,110,0.35);
+      --text:        #f0ebe3;
+      --text-dim:    #666;
+      --text-mid:    #999;
+      --r:           5px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Montserrat', system-ui, sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* ─── Film grain ──────────────────────────────── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 9999; opacity: 0.028;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      animation: grain .18s steps(1) infinite;
+    }
+    @keyframes grain {
+      0%  { transform: translate(0,0); }
+      25% { transform: translate(-2%,2%); }
+      50% { transform: translate(2%,-2%); }
+      75% { transform: translate(-2%,-1%); }
+    }
+
+    /* ─── Custom cursor ───────────────────────────── */
+    .has-cursor, .has-cursor * { cursor: none !important; }
+
+    .cursor-ring {
+      position: fixed;
+      width: 34px; height: 34px;
+      border: 1.5px solid rgba(201,169,110,.65);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 99998;
+      top: 0; left: 0;
+      transform: translate(-50%,-50%);
+      transition:
+        width  .28s cubic-bezier(.16,1,.3,1),
+        height .28s cubic-bezier(.16,1,.3,1),
+        background .22s,
+        border-color .22s,
+        opacity .3s;
+      will-change: transform;
+    }
+
+    .cursor-ring.collapsed {
+      width: 10px; height: 10px;
+      background: rgba(201,169,110,.6);
+      border-color: transparent;
+    }
+
+    /* Ambient glow that trails the mouse */
+    .cursor-glow {
+      position: fixed;
+      width: 680px; height: 680px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,169,110,.07) 0%, transparent 68%);
+      pointer-events: none;
+      z-index: 1;
+      top: 0; left: 0;
+      transform: translate(-50%,-50%);
+      mix-blend-mode: screen;
+      will-change: transform;
+    }
+
+    /* keep main content above the glow layer */
+    header, .grid-wrap, footer { position: relative; z-index: 2; }
+
+    /* ─── Header reveal animations ────────────────── */
+    @keyframes revealUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    header .eyebrow {
+      opacity: 0;
+      animation: revealUp .8s cubic-bezier(.16,1,.3,1) .12s forwards;
+    }
+    header h1 {
+      opacity: 0;
+      animation: revealUp .95s cubic-bezier(.16,1,.3,1) .28s forwards;
+    }
+    header .divider {
+      opacity: 0;
+      animation: revealUp .7s cubic-bezier(.16,1,.3,1) .52s forwards;
+    }
+    header .header-sub {
+      opacity: 0;
+      animation: revealUp .7s cubic-bezier(.16,1,.3,1) .66s forwards;
+    }
+
+    /* ─── Header ──────────────────────────────────── */
+    header { text-align: center; padding: 90px 24px 68px; }
+
+    .eyebrow {
+      font-size: 10px; letter-spacing: 5px;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 18px;
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(3rem, 7vw, 5.5rem);
+      font-weight: 300; line-height: 1.05; letter-spacing: -.02em;
+    }
+
+    h1 em { font-style: italic; color: var(--gold); }
+
+    .divider {
+      width: 48px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 26px auto;
+    }
+
+    .header-sub {
+      font-size: 10px; letter-spacing: 3.5px;
+      color: var(--text-dim); text-transform: uppercase;
+    }
+
+    /* ─── Grid ────────────────────────────────────── */
+    .grid-wrap { max-width: 1380px; margin: 0 auto; padding: 10px 22px 100px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 920px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+
+    /* ─── Card ────────────────────────────────────── */
+    .card {
+      position: relative;
+      aspect-ratio: 4/3;
+      cursor: pointer;
+      overflow: hidden;
+      border-radius: var(--r);
+      background: var(--surface);
+      opacity: 0;
+      transform: translateY(28px) scale(.984);
+      /* default transition: scroll-reveal + tilt snap-back */
+      transition:
+        opacity   .65s cubic-bezier(.16,1,.3,1),
+        transform .65s cubic-bezier(.16,1,.3,1),
+        box-shadow .4s ease;
+      will-change: transform, opacity;
+    }
+
+    .card.in { opacity: 1; transform: none; }
+
+    /* While tilting: disable slow transition so card tracks mouse instantly */
+    .card.tilting { transition: box-shadow .12s ease !important; }
+
+    /* Smooth spring-back when mouse leaves */
+    .card.snap-back {
+      transition:
+        opacity   .65s cubic-bezier(.16,1,.3,1),
+        transform  .7s cubic-bezier(.16,1,.3,1),
+        box-shadow .45s ease !important;
+    }
+
+    .card-img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+      transition: transform .9s cubic-bezier(.16,1,.3,1);
+    }
+
+    .card:hover .card-img { transform: scale(1.07); }
+
+    .card-veil {
+      position: absolute; inset: 0;
+      background: linear-gradient(158deg,
+        rgba(0,0,0,.04) 0%, rgba(0,0,0,.22) 38%, rgba(0,0,0,.88) 100%);
+      transition: background .4s;
+    }
+
+    .card:hover .card-veil {
+      background: linear-gradient(158deg,
+        rgba(0,0,0,.08) 0%, rgba(0,0,0,.38) 38%, rgba(0,0,0,.94) 100%);
+    }
+
+    /* gold border glow */
+    .card::after {
+      content: '';
+      position: absolute; inset: 0;
+      border: 1px solid transparent;
+      border-radius: var(--r);
+      transition: border-color .3s;
+      pointer-events: none; z-index: 3;
+    }
+    .card:hover::after { border-color: var(--gold-border); }
+
+    .card-badge { position: absolute; top: 12px; right: 12px; z-index: 4; }
+
+    .badge {
+      padding: 4px 9px;
+      font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase;
+      border-radius: 2px;
+      background: var(--gold-dim); border: 1px solid var(--gold-border); color: var(--gold);
+    }
+
+    /* card-body: parallax target — JS applies translate, CSS handles snap-back */
+    .card-body {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 20px 18px; z-index: 4;
+      transition: transform .7s cubic-bezier(.16,1,.3,1);
+      will-change: transform;
+    }
+
+    /* While tilting, disable body transition so parallax tracks instantly */
+    .card.tilting .card-body { transition: none; }
+
+    .card-num {
+      font-size: 9px; letter-spacing: 3.5px; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 5px;
+    }
+
+    .card-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.3rem; font-weight: 400; line-height: 1.2;
+    }
+
+    .card-cta {
+      display: flex; align-items: center; gap: 9px;
+      font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--text-mid); margin-top: 10px;
+      opacity: 0; transform: translateY(7px);
+      transition: opacity .28s .04s, transform .28s .04s;
+    }
+
+    .card-cta-bar { display: block; width: 20px; height: 1px; background: var(--gold); flex-shrink: 0; }
+
+    .card:hover .card-cta { opacity: 1; transform: none; }
+
+    /* ─── Modal ───────────────────────────────────── */
+    .modal-bg {
+      position: fixed; inset: 0;
+      background: rgba(5,5,5,.97);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity .35s ease;
+    }
+    .modal-bg.open { opacity: 1; pointer-events: all; }
+
+    /* Inner wrapper: scale + slide on open */
+    .modal-inner {
+      width: 100%;
+      display: flex; flex-direction: column; align-items: center;
+      transform: translateY(20px) scale(.96);
+      opacity: 0;
+      transition:
+        transform .55s cubic-bezier(.16,1,.3,1),
+        opacity   .45s ease;
+      transition-delay: .06s;
+    }
+
+    .modal-bg.open .modal-inner {
+      transform: none;
+      opacity: 1;
+    }
+
+    /* top bar */
+    .modal-top {
+      width: 100%; max-width: 1120px;
+      padding: 16px 26px 8px;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .m-eyebrow {
+      font-size: 9px; letter-spacing: 4px; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+
+    .m-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(1.3rem, 3vw, 2rem); font-weight: 400;
+    }
+
+    .btn-x {
+      background: none; border: 1px solid rgba(255,255,255,.1); color: var(--text);
+      width: 38px; height: 38px; border-radius: 50%;
+      cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: border-color .2s, background .2s, color .2s;
+    }
+    .btn-x:hover { border-color: var(--gold-border); background: var(--gold-dim); color: var(--gold); }
+
+    /* comparison area */
+    .comp-wrap {
+      width: 100%; max-width: 1120px;
+      padding: 0 26px;
+      flex: 1; min-height: 0;
+      display: flex; align-items: center;
+    }
+
+    .comp-box {
+      position: relative;
+      width: 100%; aspect-ratio: 16/9; max-height: 64vh;
+      border-radius: var(--r); overflow: hidden;
+      background: var(--surface);
+      cursor: ew-resize; user-select: none;
+    }
+
+    .comp-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: contain; display: block;
+      transition: opacity .3s;
+    }
+
+    /* Wrapper carries clip-path + white fill for the reference panel */
+    .comp-before-wrap {
+      position: absolute; inset: 0;
+      background: #fff;
+      clip-path: inset(0 50% 0 0);
+      z-index: 2;
+      will-change: clip-path;
+    }
+
+    .comp-before-wrap .comp-img { position: absolute; inset: 0; }
+
+    /* loading shimmer */
+    .comp-box.loading .comp-img { opacity: 0; }
+    .comp-box.loading::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg, var(--surface) 0%, var(--surface-2) 50%, var(--surface) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.3s ease infinite; z-index: 8;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* chips */
+    .chip {
+      position: absolute; top: 13px;
+      padding: 5px 10px;
+      font-size: 8px; letter-spacing: 3px; text-transform: uppercase;
+      border-radius: 2px; font-weight: 500; z-index: 6; pointer-events: none;
+    }
+    .chip-b { left: 13px;  background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.18); color: var(--text-mid); }
+    .chip-a { right: 13px; background: var(--gold-dim);  border: 1px solid var(--gold-border); color: var(--gold); }
+
+    /* drag handle */
+    .drag-line {
+      position: absolute; top: 0; bottom: 0; left: 50%;
+      width: 2px; background: var(--gold);
+      transform: translateX(-50%);
+      z-index: 7; pointer-events: none;
+      box-shadow: 0 0 14px rgba(201,169,110,.55);
+    }
+
+    .drag-line::before {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 42px; height: 42px;
+      background: #090909;
+      border: 2px solid var(--gold); border-radius: 50%;
+      box-shadow: 0 0 22px rgba(201,169,110,.3);
+    }
+
+    .drag-line::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 20px; height: 14px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 14'%3E%3Cpath d='M6 1L1 7l5 6M14 1l5 6-5 6' stroke='%23c9a96e' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+    }
+
+    /* hint */
+    .comp-hint {
+      font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--text-dim); padding: 8px 0 2px; flex-shrink: 0;
+    }
+
+    /* nav */
+    .modal-nav {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 8px 26px 12px; flex-shrink: 0;
+    }
+
+    .nav-btn {
+      background: none; border: 1px solid rgba(255,255,255,.1); color: var(--text-mid);
+      width: 34px; height: 34px; border-radius: 50%;
+      cursor: pointer; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .2s, background .2s, color .2s;
+    }
+    .nav-btn:hover:not(:disabled) { border-color: var(--gold-border); background: var(--gold-dim); color: var(--gold); }
+    .nav-btn:disabled { opacity: .22; cursor: not-allowed; }
+
+    .dots { display: flex; gap: 7px; align-items: center; }
+
+    .dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--text-dim); cursor: pointer;
+      transition: background .2s, transform .2s;
+    }
+    .dot.on { background: var(--gold); transform: scale(1.55); }
+
+    .modal-kbd {
+      font-size: 9px; color: rgba(255,255,255,.14);
+      letter-spacing: 1.5px; padding-bottom: 12px; flex-shrink: 0;
+    }
+
+    /* ─── Footer ──────────────────────────────────── */
+    footer {
+      border-top: 1px solid rgba(201,169,110,.1);
+      text-align: center; padding: 34px 24px;
+      color: var(--text-dim); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <p class="eyebrow">Architectural &amp; Interior Visualization</p>
+    <h1>Rendering<br><em>Showcase</em></h1>
+    <div class="divider"></div>
+    <p class="header-sub">9 Projects &nbsp;·&nbsp; Before &amp; After</p>
+  </header>
+
+  <div class="grid-wrap">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="modal-bg" id="modal" role="dialog" aria-modal="true">
+    <div class="modal-inner">
+
+      <div class="modal-top">
+        <div>
+          <p class="m-eyebrow">Before &amp; After</p>
+          <h2 class="m-title" id="mTitle"></h2>
+        </div>
+        <button class="btn-x" id="btnClose" aria-label="Close">&#10005;</button>
+      </div>
+
+      <div class="comp-wrap">
+        <div class="comp-box" id="compBox">
+          <img class="comp-img comp-after" id="imgAfter" src="" alt="Final Rendering">
+          <div class="comp-before-wrap" id="beforeWrap">
+            <img class="comp-img" id="imgBefore" src="" alt="Reference Photo">
+          </div>
+          <span class="chip chip-b">Reference</span>
+          <span class="chip chip-a">Rendering</span>
+          <div class="drag-line" id="dragLine"></div>
+        </div>
+      </div>
+
+      <p class="comp-hint">&#8592; Drag to compare &#8594;</p>
+
+      <div class="modal-nav" id="navWrap">
+        <button class="nav-btn" id="btnPrev">&#8592;</button>
+        <div class="dots" id="dotsEl"></div>
+        <button class="nav-btn" id="btnNext">&#8594;</button>
+      </div>
+
+      <p class="modal-kbd">ESC to close &nbsp;&nbsp;·&nbsp;&nbsp; &#8592; &#8594; to navigate</p>
+
+    </div>
+  </div>
+
+  <footer>
+    <p>Rendering Portfolio &nbsp;·&nbsp; &copy; 2026 All rights reserved</p>
+  </footer>
+
+  <script>
+    /* ════════════════════════════════════════════════
+       DATA
+    ════════════════════════════════════════════════ */
+    const PROJECTS = [
+      {
+        name: "Project 01", folder: "project_1",
+        refs:    ["Reference_1.png", "Reference_2.png"],
+        renders: ["Rendering_1.png", "Rendering_2.png"]
+      },
+      {
+        name: "Project 02", folder: "project_2",
+        refs:    ["Reference (1).jpg", "Reference (2).jpg"],
+        renders: ["rendering (1).png", "rendering (2).png", "rendering (3).png"]
+      },
+      {
+        name: "Project 03", folder: "project_3",
+        refs:    ["IMG_20260221_114501.jpg", "IMG_20260221_114637.jpg", "IMG_20260223_143645.jpg.jpeg"],
+        renders: ["rendering (1).png", "rendering (2).png", "rendering (3).png"]
+      },
+      {
+        name: "Project 04", folder: "project_4",
+        refs:    ["reference (1).jpg", "reference (2).jpg"],
+        renders: ["rendering (1).png", "rendering (2).png"]
+      },
+      {
+        name: "Project 05", folder: "project_5",
+        refs:    ["IMG_20260122_114833.jpg", "IMG_20260122_114904.jpg", "IMG_20260122_115148.jpg"],
+        renders: ["rendering (1).png", "rendering (2).png", "rendering (3).png"]
+      },
+      {
+        name: "Project 06", folder: "project_6",
+        refs:    ["WhatsApp Image 2026-02-09 at 2.55.40 PM (1).jpeg",
+                  "WhatsApp Image 2026-02-09 at 2.55.40 PM (2).jpeg"],
+        renders: ["0001_final.png", "0002_final.png"]
+      },
+      {
+        name: "Project 07", folder: "project_7",
+        refs:    ["IMG_20260122_110620.jpg", "IMG_20260122_110624.jpg", "IMG_20260122_111253.jpg"],
+        renders: ["0001_final.png", "0002_final.png"]
+      },
+      {
+        name: "Project 08", folder: "project_8",
+        refs:    ["reference (1).jpg", "reference (2).jpg", "reference (3).jpg"],
+        renders: ["rendering (1).png", "rendering (2).png", "rendering (3).png"]
+      },
+      {
+        name: "Project 09", folder: "project_9",
+        refs:    ["references.jpeg", "references.png"],
+        renders: ["rendering (1).png", "rendering (2).png"]
+      }
+    ];
+
+    /* ════════════════════════════════════════════════
+       CUSTOM CURSOR  (mouse/fine-pointer only)
+    ════════════════════════════════════════════════ */
+    if (window.matchMedia('(pointer: fine)').matches) {
+      document.body.classList.add('has-cursor');
+
+      const ring = document.createElement('div');
+      ring.className = 'cursor-ring';
+      document.body.appendChild(ring);
+
+      const glow = document.createElement('div');
+      glow.className = 'cursor-glow';
+      document.body.appendChild(glow);
+
+      let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+      let rx = mx, ry = my;
+
+      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+
+      // Ring lerps smoothly; glow snaps directly to mouse for instant environmental lighting
+      (function tickCursor() {
+        rx += (mx - rx) * 0.14;
+        ry += (my - ry) * 0.14;
+        ring.style.left = rx + 'px';
+        ring.style.top  = ry + 'px';
+        glow.style.left = mx + 'px';
+        glow.style.top  = my + 'px';
+        requestAnimationFrame(tickCursor);
+      })();
+
+      // Collapse ring over interactive elements
+      document.addEventListener('mouseover', e => {
+        if (e.target.closest('button, .card, .dot, a, [role="button"]'))
+          ring.classList.add('collapsed');
+      });
+      document.addEventListener('mouseout', e => {
+        if (e.target.closest('button, .card, .dot, a, [role="button"]'))
+          ring.classList.remove('collapsed');
+      });
+
+      document.addEventListener('mouseleave', () => { ring.style.opacity = '0'; });
+      document.addEventListener('mouseenter', () => { ring.style.opacity = '1'; });
+    }
+
+    /* ════════════════════════════════════════════════
+       BUILD PAIRS
+    ════════════════════════════════════════════════ */
+    function buildPairs(proj) {
+      const count = Math.max(proj.refs.length, proj.renders.length);
+      const seen  = new Set();
+      const out   = [];
+      for (let i = 0; i < count; i++) {
+        const b = proj.refs[Math.min(i, proj.refs.length - 1)];
+        const a = proj.renders[Math.min(i, proj.renders.length - 1)];
+        const k = b + '|' + a;
+        if (!seen.has(k)) { seen.add(k); out.push({ b, a }); }
+      }
+      return out;
+    }
+
+    /* ════════════════════════════════════════════════
+       BUILD GRID
+    ════════════════════════════════════════════════ */
+    const gridEl = document.getElementById('grid');
+
+    PROJECTS.forEach((proj, i) => {
+      const ps    = buildPairs(proj);
+      const cover = `${proj.folder}/${ps[0].a}`;
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <img class="card-img" src="${cover}" alt="${proj.name}" loading="lazy">
+        <div class="card-veil"></div>
+        <div class="card-badge">
+          <span class="badge">${ps.length}&nbsp;view${ps.length > 1 ? 's' : ''}</span>
+        </div>
+        <div class="card-body">
+          <p class="card-num">Project ${String(i + 1).padStart(2, '0')}</p>
+          <h3 class="card-title">${proj.name}</h3>
+          <span class="card-cta"><span class="card-cta-bar"></span>View comparison</span>
+        </div>
+      `;
+
+      card.addEventListener('click', () => openModal(i));
+      attachTilt(card);
+      gridEl.appendChild(card);
+    });
+
+    /* ════════════════════════════════════════════════
+       SCROLL REVEAL  — IntersectionObserver
+       Replaces the old setTimeout stagger loop.
+       Cards that are already in the viewport on load
+       fire immediately; below-fold cards animate in
+       as the user scrolls to them.
+    ════════════════════════════════════════════════ */
+    const revealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('in');
+        revealObserver.unobserve(entry.target); // reveal once, then stop observing
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    gridEl.querySelectorAll('.card').forEach(card => revealObserver.observe(card));
+
+    /* ════════════════════════════════════════════════
+       3D TILT  +  PARALLAX TEXT
+       Uses perspective() inline in the transform so
+       no transform-style: preserve-3d is needed and
+       overflow: hidden on the card stays intact.
+       The card-body translates in the same direction
+       as the tilt for a layered depth illusion.
+    ════════════════════════════════════════════════ */
+    function attachTilt(card) {
+      const MAX_TILT  = 10;  // degrees
+      const MAX_LIFT  =  7;  // card-body px offset
+      let   tiltRaf   = null;
+
+      card.addEventListener('mousemove', e => {
+        if (!card.classList.contains('in')) return; // skip pre-reveal cards
+
+        const rect = card.getBoundingClientRect();
+        const nx   = (e.clientX - rect.left)  / rect.width  - 0.5; // –0.5 … +0.5
+        const ny   = (e.clientY - rect.top)   / rect.height - 0.5;
+
+        if (tiltRaf) return; // already have a frame pending
+        tiltRaf = requestAnimationFrame(() => {
+          tiltRaf = null;
+          card.classList.add('tilting');
+          card.classList.remove('snap-back');
+
+          card.style.transform =
+            `perspective(900px) rotateX(${ny * -MAX_TILT}deg) rotateY(${nx * MAX_TILT}deg) scale(1.025)`;
+
+          card.style.boxShadow =
+            `${nx * -18}px ${ny * -18}px 50px rgba(0,0,0,.6),
+             0 0 0 1px rgba(201,169,110,${(Math.abs(nx) + Math.abs(ny)) * 0.3})`;
+
+          // Body parallax: moves with the tilt for a floating-text feel
+          card.querySelector('.card-body').style.transform =
+            `translate(${nx * MAX_LIFT}px, ${ny * MAX_LIFT}px)`;
+        });
+      });
+
+      card.addEventListener('mouseleave', () => {
+        if (tiltRaf) { cancelAnimationFrame(tiltRaf); tiltRaf = null; }
+
+        card.classList.remove('tilting');
+        card.classList.add('snap-back');
+
+        // Clear inline transforms — CSS snap-back transition handles spring return
+        card.style.transform = '';
+        card.style.boxShadow = '';
+        card.querySelector('.card-body').style.transform = '';
+      });
+    }
+
+    /* ════════════════════════════════════════════════
+       MODAL
+    ════════════════════════════════════════════════ */
+    const modal     = document.getElementById('modal');
+    const mTitle    = document.getElementById('mTitle');
+    const imgBefore = document.getElementById('imgBefore');
+    const imgAfter  = document.getElementById('imgAfter');
+    const dragLine  = document.getElementById('dragLine');
+    const compBox   = document.getElementById('compBox');
+    const dotsEl    = document.getElementById('dotsEl');
+    const btnPrev   = document.getElementById('btnPrev');
+    const btnNext   = document.getElementById('btnNext');
+    const navWrap   = document.getElementById('navWrap');
+
+    let projIdx   = -1;
+    let pairIdx   = 0;
+    let pairs     = [];
+    let sliderPct = 50;
+    let dragging  = false;
+
+    function openModal(i) {
+      projIdx = i;
+      pairs   = buildPairs(PROJECTS[i]);
+      mTitle.textContent = PROJECTS[i].name;
+      buildDots();
+      loadPair(0);
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function loadPair(idx) {
+      pairIdx = idx;
+      const { b, a } = pairs[idx];
+      const folder    = PROJECTS[projIdx].folder;
+
+      compBox.classList.add('loading');
+      setSlider(50);
+
+      let n = 0;
+      const done = () => { if (++n >= 2) compBox.classList.remove('loading'); };
+      imgBefore.onload  = imgBefore.onerror  = done;
+      imgAfter.onload   = imgAfter.onerror   = done;
+
+      imgBefore.src = `${folder}/${b}`;
+      imgAfter.src  = `${folder}/${a}`;
+
+      btnPrev.disabled = idx === 0;
+      btnNext.disabled = idx === pairs.length - 1;
+      syncDots();
+    }
+
+    /* ─── Comparison slider  (Pointer Events + rAF) ── */
+    let pendingPct = null;
+    let rafId      = null;
+
+    function setSlider(pct) {
+      sliderPct = Math.max(1, Math.min(99, pct));
+      document.getElementById('beforeWrap').style.clipPath =
+        `inset(0 ${100 - sliderPct}% 0 0)`;
+      dragLine.style.left = sliderPct + '%';
+    }
+
+    function flushSlider() {
+      if (pendingPct !== null) { setSlider(pendingPct); pendingPct = null; }
+      rafId = null;
+    }
+
+    function schedulePct(pct) {
+      pendingPct = pct;
+      if (!rafId) rafId = requestAnimationFrame(flushSlider);
+    }
+
+    function pctFrom(e) {
+      const r = compBox.getBoundingClientRect();
+      return ((e.clientX - r.left) / r.width) * 100;
+    }
+
+    compBox.addEventListener('pointerdown', e => {
+      dragging = true;
+      compBox.setPointerCapture(e.pointerId);
+      schedulePct(pctFrom(e));
+      e.preventDefault();
+    });
+
+    compBox.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      schedulePct(pctFrom(e));
+    });
+
+    compBox.addEventListener('pointerup', e => {
+      dragging = false;
+      compBox.releasePointerCapture(e.pointerId);
+    });
+
+    compBox.addEventListener('pointercancel', () => { dragging = false; });
+
+    /* ─── Dots ────────────────────────────────────── */
+    function buildDots() {
+      dotsEl.innerHTML = '';
+      pairs.forEach((_, i) => {
+        const d = document.createElement('div');
+        d.className = 'dot';
+        d.addEventListener('click', () => loadPair(i));
+        dotsEl.appendChild(d);
+      });
+      navWrap.style.visibility = pairs.length <= 1 ? 'hidden' : 'visible';
+      syncDots();
+    }
+
+    function syncDots() {
+      dotsEl.querySelectorAll('.dot').forEach((d, i) =>
+        d.classList.toggle('on', i === pairIdx)
+      );
+    }
+
+    /* ─── Controls ────────────────────────────────── */
+    document.getElementById('btnClose').addEventListener('click', closeModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    btnPrev.addEventListener('click', () => { if (pairIdx > 0) loadPair(pairIdx - 1); });
+    btnNext.addEventListener('click', () => {
+      if (pairIdx < pairs.length - 1) loadPair(pairIdx + 1);
+    });
+
+    document.addEventListener('keydown', e => {
+      if (!modal.classList.contains('open')) return;
+      if (e.key === 'Escape')     { closeModal(); return; }
+      if (e.key === 'ArrowLeft'  && pairIdx > 0)                loadPair(pairIdx - 1);
+      if (e.key === 'ArrowRight' && pairIdx < pairs.length - 1) loadPair(pairIdx + 1);
+    });
+  </script>
+</body>
+</html>
